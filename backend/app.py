@@ -5,7 +5,18 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from React
+# Configure CORS to allow requests from GitHub Pages
+CORS(app, resources={
+    r"/api/*": {
+        "origins": [
+            "https://dvdjsp.github.io",
+            "http://localhost:3000",
+            "http://localhost:5000"
+        ],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
 
 @app.route('/api/stock-data', methods=['GET'])
 def get_stock_data():
