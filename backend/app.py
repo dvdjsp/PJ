@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import yfinance as yf
 import pandas as pd
+from datetime import datetime, timedelta
 import os
 
 app = Flask(__name__)
@@ -28,9 +29,10 @@ def get_stock_data():
     interval = request.args.get('interval', '1d')
     
     try:
-        # Download data from yfinance using download method (more reliable)
-        print(f"Fetching {ticker} from {start} to {end} with interval {interval}")
-        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
+    end = (datetime.strptime(end, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+    except Exception:
+        pass
+    data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
         
         if data.empty:
             return jsonify({
