@@ -37,7 +37,7 @@ def get_stock_data():
 
         # Download data from yfinance
         print(f"Fetching {ticker} from {start} to {end} with interval {interval}")
-        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
+        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False, prepost=True)
 
         if data.empty:
             return jsonify({
