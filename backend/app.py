@@ -28,11 +28,12 @@ def get_stock_data():
     end = request.args.get('end', '2024-12-31')
     interval = request.args.get('interval', '1d')
     
-    try:
-        end = (datetime.strptime(end, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
-    except Exception:
-        pass
-    data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
+        try:
+            end = (datetime.strptime(end, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+            
+        data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
         
         if data.empty:
             return jsonify({
