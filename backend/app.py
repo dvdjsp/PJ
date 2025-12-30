@@ -27,20 +27,24 @@ def get_stock_data():
     start = request.args.get('start', '2024-01-01')
     end = request.args.get('end', '2024-12-31')
     interval = request.args.get('interval', '1d')
-    
+
+    try:
+        # Make end-date inclusive for YYYY-MM-DD inputs by bumping end by 1 day
         try:
             end = (datetime.strptime(end, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
         except Exception:
             pass
-            
+
+        # Download data from yfinance
+        print(f"Fetching {ticker} from {start} to {end} with interval {interval}")
         data = yf.download(ticker, start=start, end=end, interval=interval, progress=False)
-        
+
         if data.empty:
             return jsonify({
                 'success': False,
                 'error': f'No data found for {ticker}. Check ticker symbol and date range.'
             }), 404
-        
+
         # Convert to list of dicts for JSON
         result = []
         for index, row in data.iterrows():
@@ -53,11 +57,11 @@ def get_stock_data():
                 'close': float(row['Close']),
                 'volume': int(row['Volume'])
             })
-        
+
         print(f"Successfully fetched {len(result)} data points")
         print(f"First timestamp: {result[0]['time']}, Last timestamp: {result[-1]['time']}")
         print(f"Price range: ${result[0]['close']:.2f} to ${result[-1]['close']:.2f}")
-        
+
         return jsonify({
             'success': True,
             'ticker': ticker.upper(),
@@ -65,7 +69,7 @@ def get_stock_data():
             'data': result,
             'count': len(result)
         })
-        
+
     except Exception as e:
         print(f"Error fetching data: {str(e)}")
         return jsonify({
