@@ -1,9 +1,40 @@
 // public/electron.js
-const { app, BrowserWindow, Menu } = require('electron'); // Add Menu import
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
+const { spawn } = require('child_process');
 
 let mainWindow;
+let pythonProcess;
+
+// Function to start Python backend
+function startPythonBackend() {
+  const backendPath = isDev
+    ? path.join(__dirname, '../backend')
+    : path.join(process.resourcesPath, 'backend');
+  
+  const scriptPath = path.join(backendPath, 'app.py');
+  
+  console.log('Starting Python backend from:', scriptPath);
+  
+  // Start Python process
+  pythonProcess = spawn('python3', [scriptPath], {
+    cwd: backendPath,
+    env: { ...process.env, PORT: '5000' }
+  });
+  
+  pythonProcess.stdout.on('data', (data) => {
+    console.log(`Backend: ${data}`);
+  });
+  
+  pythonProcess.stderr.on('data', (data) => {
+    console.error(`Backend Error: ${data}`);
+  });
+  
+  pythonProcess.on('close', (code) => {
+    console.log(`Backend process exited with code ${code}`);
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -83,9 +114,19 @@ function createWindow() {
   });
 }
 
-app.on('ready', createWindow);
+app.on('ready', () => {
+  // Start Python backend first
+  startPythonBackend();
+  
+  // Wait a bit for backend to start, then create window
+  setTimeout(createWindow, 2000);
+});
 
 app.on('window-all-closed', () => {
+  // Kill Python process when closing
+  if (pythonProcess) {
+    pythonProcess.kill();
+  }
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -94,5 +135,12 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow();
+  }
+});
+
+app.on('before-quit', () => {
+  // Kill Python process on quit
+  if (pythonProcess) {
+    pythonProcess.kill();
   }
 });
